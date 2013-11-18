@@ -23,6 +23,7 @@ function getName () {
 
   return firstName; // different spelling, mind the caps!
 }
+```
 
 In this case, the unreferenced variable `firstname` indicates a real error.
 
@@ -37,6 +38,7 @@ function () {
   return 0.5;
 }
 ```
+
 Variable `value` is now a local variable which is assigned a value but is not 
 used otherwise anymore. 
     
@@ -82,7 +84,7 @@ invalid JavaScript code.
 
 jshund will only look for variables assigned using the `var` keyword. It will
 not care about any variables that are assigned without using the `var` keyword.
-jshund will simply assume these are meaningful global variables (:cry:).
+jshund will simply assume these are meaningful global variables :cry:
 
 jshund also assumes `eval` is not used anywhere in the code. `eval` has some
 side-effects, and whether or not a local variable is referenced in eval'ed
