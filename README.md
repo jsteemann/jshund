@@ -15,6 +15,10 @@ Then compile it using a C++ compiler (e.g. `g++`):
 
     g++ -Wall -Wextra jshund.cpp -o jshund
 
+or, when using `clang++`:
+
+    clang++ -Wall -Wextra jshund.cpp -o jshund
+
 You then have a binary `jshund` available in the local directory.
 
 usage
