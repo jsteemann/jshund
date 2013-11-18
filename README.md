@@ -2,12 +2,21 @@ jshund
 ======
 A tool to list unreferenced local variables in JavaScript source code files.
 
+Intro
+-----
 JavaScript engines normally don't complain about unreferenced local variables 
 in script code, at least not at compile time. They may report such problems at
 run time, but that might already be too late. Finding such cases at compile
 time is much better. jshund assists in finding a few of those issues with
 static analysis.
 
+jshund's only use case is to find unreferenced local variables. There are tools
+out there that provide a lot more static analysis features, namely JSLint and
+JSHint. You may still use jshund in an environment where JSLint or JSHint are
+not available for whatever reason.
+
+Unreferenced variables
+----------------------
 Unreferenced local variables typically occur after a few iterations of 
 modifications of a program: some code gets changed, and that change may lead
 to variables becoming assigned-only or even declared-only. 
