@@ -2,32 +2,43 @@ jshund
 ======
 A tool to list unreferenced local variables in JavaScript source code files.
 
-Unreferenced local variables typically occur after a few iterations of 
-modifications a program. Some code is changed, and some variables become
-useless afterwards. This is not necessarily a program, but if a variable
-name is misspelled or assigned only, it might be worth checking if a real
-error is lurking behind that.
-
 JavaScript engines normally don't complain about unreferenced local variables 
-in script code. jshund helps finding them.
+in script code, at least not at compile time. They may report such problems at
+run time, but that might already be too late. Finding such cases at compile
+time is much better. jshund assists in finding a few of those issues with
+static analysis.
+
+Unreferenced local variables typically occur after a few iterations of 
+modifications of a program: some code gets changed, and that change may lead
+to variables becoming assigned-only or even declared-only. 
+
+This is not necessarily always a real problem, but sometimes indicates one. 
+For example, a variable name might have been misspelled and that might manifest 
+itself in a variable becoming assigned-only.
 
 Example:
+```javascript
+function getName () {
+  var firstname = "foobar"; // assigned only
+
+  return firstName; // different spelling, mind the caps!
+}
+
+In this case, the unreferenced variable `firstname` indicates a real error.
+
+In the following example, a variable `value` was used once but the due to some
+modification it became unused:
+
 ```javascript
 function () {
   var value = Math.random();
 
-  return 2 + 3;
+  //return value;
+  return 0.5;
 }
 ```
-In the above example, variable `value` is a local variable which is assigned
-a value but is not used otherwise. At least the left-hand side of the assignment
-(`var value = `) can be removed here without changing the meaning of the program.
-
-Whether or not the right-hand side of the assignment (`Math.random()`) can be 
-removed without changing the meaning of the program is up to developer inspection. 
-Non-constant expressions on the right-hand side may have side effects (e.g. function 
-calls, exceptions thrown etc.) and simply removing them might lead to different
-program behavior.
+Variable `value` is now a local variable which is assigned a value but is not 
+used otherwise anymore. 
     
 Building jshund
 ---------------
@@ -71,9 +82,22 @@ invalid JavaScript code.
 
 jshund will only look for variables assigned using the `var` keyword. It will
 not care about any variables that are assigned without using the `var` keyword.
-jshund will simply assume these are meaningful global variables (yuck!).
+jshund will simply assume these are meaningful global variables (:cry:).
 
-jshund also assumes `eval` is not used anywhere in the code. `eval` has nice
+jshund also assumes `eval` is not used anywhere in the code. `eval` has some
 side-effects, and whether or not a local variable is referenced in eval'ed
 code is hard to determine. So if you use `eval` somewhere, don't let jshund
 check these scripts.
+
+For all unreferenced variables that jshund will find, you need to figure out
+yourself how to fix the problem. In the simplest case, the left-hand side of 
+the variable assignment can be removed. In some cases, also the right-hand
+side of the assignment can be removed without changing the meaning of the
+program.
+
+Please be aware that non-constant expressions on the right-hand side of an 
+assignment may have side effects (e.g. function calls, exceptions thrown etc.) 
+and simply removing them might lead to different program behavior.
+
+In short: you should always inspect the code at the position indicated and 
+determine for yourself if it needs a fix and which.
