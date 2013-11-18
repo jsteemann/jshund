@@ -1,5 +1,5 @@
-jshund
-======
+jshund :dog2:
+=============
 A tool to list unreferenced local variables in JavaScript source code files.
 
 JavaScript engines normally don't complain about unreferenced local variables 
