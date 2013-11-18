@@ -11,10 +11,11 @@ Download the repo:
     git clone https://github.com/jsteemann/jshund
     cd jshund 
 
-Then run configure and make
+Then compile it using a C++ compiler (e.g. `g++`):
 
-    ./configure
-    make
+    g++ -Wall -Wextra jshund.cpp -o jshund
+
+You then have a binary `jshund` available in the local directory.
 
 usage
 =====

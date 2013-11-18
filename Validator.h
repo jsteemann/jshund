@@ -152,7 +152,7 @@ namespace jshund {
 
               while (it != currentState.variables.end()) {
                 if (! (*it).second.used) {
-                  cerr << filename << ":" << (*it).second.line << ": unused variable '" << (*it).first << "'" << endl;
+                  cerr << filename << ":" << (*it).second.line << ": unused local variable '" << (*it).first << "'" << endl;
                   ++errors;
                 }
                 ++it;
@@ -167,7 +167,7 @@ namespace jshund {
 
             while (it != currentState.variables.end()) {
               if (! (*it).second.used) {
-                cerr << filename << ":" << (*it).second.line << ": unused variable '" << (*it).first << "'" << endl;
+                cerr << filename << ":" << (*it).second.line << ": unused global variable '" << (*it).first << "'" << endl;
                 ++errors;
               }
               ++it;
