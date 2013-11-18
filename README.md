@@ -28,19 +28,20 @@ function getName () {
 In this case, the unreferenced variable `firstname` indicates a real error.
 
 In the following example, a variable `value` was used once but the due to some
-modification it became unused:
+modification it is now unused:
 
 ```javascript
 function () {
   var value = Math.random();
 
-  //return value;
   return 0.5;
+  // old implementation:
+  // return value;
 }
 ```
 
 Variable `value` is now a local variable which is assigned a value but is not 
-used otherwise anymore. 
+used otherwise anymore. In this case, the assignment can be removed completely. 
     
 Building jshund
 ---------------
