@@ -10,11 +10,12 @@
 #include "Token.h"
 
 namespace jshund {
-  using namespace std;
 
   class Tokenizer {
     public:
-      Tokenizer () : _tokenMap(), _keywordMap(), _tokens() {
+      Tokenizer () : 
+        _tokenMap(), _keywordMap(), _tokens() {
+
         _tokenMap["."]   = TOKEN_DOT;
         _tokenMap[","]   = TOKEN_COMMA;
         _tokenMap["{"]   = TOKEN_CURLY_OPEN;
@@ -92,9 +93,9 @@ namespace jshund {
       ~Tokenizer () {
       }
 
-      const vector<Token>& tokenize (char* input) {
+      const std::vector<Token>& tokenize (char const* input) {
         _input    = input;
-        _length   = strlen(input);
+        _length   = ::strlen(input);
         _position = 0;
         _line     = 1; 
         _last     = TOKEN_UNKNOWN;
@@ -167,6 +168,7 @@ namespace jshund {
             ++now;
           }
           else if ((n == 'e' || n == 'E') && ! expFound) {
+            // exponent
             expFound = true;
             ++now;
           }
@@ -197,22 +199,24 @@ namespace jshund {
         }
 
         char n = _input[now];
+        // modifier
         while (n >= 'a' && n <= 'z') {
           n = _input[++now];
         }
 
-        //cout << "found regex " << string(_input + _position, now - _position) << endl;
+        //std::cout << "found regex " << std::string(_input + _position, now - _position) << std::endl;
         return makeToken(TOKEN_REGEX, until(now));
       }
 
       Token handleId () {
         // name/keyword
-        string name;
+        std::string name;
         bool canBeKeyword = true;
         size_t now = _position;
         
         while (true) {
           char n = _input[now];
+
           if (n >= 'a' && n <= 'z') {
             name.push_back(n);
           } 
@@ -234,13 +238,13 @@ namespace jshund {
         }
           
         if (canBeKeyword) {
-          map<string, TokenType>::iterator it2 = _keywordMap.find(name);
-          if (it2 != _keywordMap.end()) {
-            return makeToken((*it2).second, string(_input + _position, name.size()));
+          std::map<std::string, TokenType>::const_iterator it = _keywordMap.find(name);
+          if (it != _keywordMap.end()) {
+            return makeToken((*it).second, std::string(_input + _position, name.size()));
           }
         }
           
-        return makeToken(TOKEN_NAME, string(_input + _position, name.size()));
+        return makeToken(TOKEN_NAME, std::string(_input + _position, name.size()));
       }
 
       Token handleCommentMulti () {
@@ -275,6 +279,7 @@ namespace jshund {
 
         while (true) {
           char n = _input[now];
+
           if (n == '\r' || n == '\n' || n == '\0') {
             return makeToken(TOKEN_COMMENT_SINGLE, until(now));
           }
@@ -329,7 +334,7 @@ namespace jshund {
         TokenMapType::const_iterator it;
         for (it = _tokenMap.begin(); it != _tokenMap.end(); ++it) {
           const size_t length = (*it).first.size();
-          if (memcmp(_input + _position, (*it).first.c_str(), length) == 0) {
+          if (::memcmp(_input + _position, (*it).first.c_str(), length) == 0) {
             // found
             return makeToken((*it).second, (*it).first);
           }
@@ -362,7 +367,7 @@ namespace jshund {
         return token;
       }
 
-      Token makeToken (TokenType type, const string& v) {
+      Token makeToken (TokenType type, std::string const& v) {
         Token token;
         token.type  = type;
         token.line  = _line;
@@ -370,13 +375,13 @@ namespace jshund {
         
         _position += v.size();
 
-        //cout << "token: " << type << "," << v << endl;
+        //std::cout << "token: " << type << "," << v << std::endl;
 
         return token;
       }
 
-      string until (const size_t end) {
-        return string(_input + _position, end - _position);
+      std::string until (const size_t end) {
+        return std::string(_input + _position, end - _position);
       }
 
       void addToken (Token token) {
@@ -384,17 +389,17 @@ namespace jshund {
         _last = token.type;
       }
      
-      typedef map<string, TokenType> TokenMapType;
+      typedef std::map<std::string, TokenType> TokenMapType;
 
       TokenMapType _tokenMap;
       
-      map<string, TokenType> _keywordMap;
+      std::map<std::string, TokenType> _keywordMap;
 
-      vector<Token> _tokens;
+      std::vector<Token> _tokens;
 
       TokenType _last;
 
-      char* _input;
+      char const* _input;
 
       size_t _length;
 

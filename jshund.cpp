@@ -8,45 +8,99 @@
 #include "Tokenizer.h"
 #include "Validator.h"
 
-using namespace std;
 using namespace jshund;
 
-int main (int argc, char* argv[]) {
-  if (argc < 2) {
-    cerr << "usage: " << argv[0] << " <file>" << endl;
-    return EXIT_FAILURE;
-  }
+static std::vector<std::string> AddFiles (int argc, char* argv[]) {
+  std::vector<std::string> files;
 
-  bool hasError = false;
-  
   DirectoryIterator dir;
-  vector<string> files;
-
+  bool separator = false;
+  
+  // add files/directories specified in argv
   for (int i = 1; i < argc; ++i) {
-    dir.addFiles(files, argv[i]);
+    const std::string argument(argv[i]);
+
+    if (argument.substr(0, 2) == "--" && ! separator) {
+      // option/value separator
+      if (argument.size() == 2) {
+        separator = true;
+      }
+      continue;
+    }
+
+    dir.addFiles(files, argument);
   }
+
+  return files;
+}
+
+static bool ProcessFiles (std::vector<std::string>& files, bool colors, bool globals) {
+  bool hasError = false;
 
   FileReader f;
   for (size_t i = 0; i < files.size(); ++i) {
-    const string filename = files[i];
+    const std::string filename = files[i];
 
     char* fileContent = f.read(filename);
 
     if (fileContent == 0) {
-      cerr << "could not read input file '" << filename << "'" << endl;
+      std::cerr << "could not read input file '" << filename << "'" << std::endl;
       hasError = true;
     }
     else {
       Tokenizer t;
-      Validator v;
+      Validator v(colors, globals);
       if (! v.validate(filename, t.tokenize(fileContent))) {
         hasError = true;
-      }  
+      }
     }
 
     delete[] fileContent;
   }
 
-  return hasError ? EXIT_FAILURE : EXIT_SUCCESS;
+  return hasError;
+}
+
+int main (int argc, char* argv[]) {
+  if (argc < 2) {
+    // not enough arguments
+    std::cout << "usage: " << argv[0] << " <file>" << std::endl;
+    return EXIT_FAILURE;
+  }
+ 
+  // parse options
+  bool colors  = true;
+  bool globals = true; 
+
+  for (int i = 1; i < argc; ++i) {
+    const std::string argument(argv[i]);
+
+    if (argument.size() > 2 && argument.substr(0, 2) == "--") { 
+      if (argument == "--colors") {
+        colors = true;
+      }
+      else if (argument == "--no-colors") {
+        colors = false;
+      }
+      else if (argument == "--globals") {
+        globals = true;
+      }
+      else if (argument == "--no-globals") {
+        globals = false;
+      }
+    }
+  }
+
+  // add files
+  std::vector<std::string> files = AddFiles(argc, argv);
+
+  int errors = ProcessFiles(files, colors, globals);
+
+  // return status code based on whether there were any errors
+  if (errors == 0) {
+    return EXIT_SUCCESS;
+  }
+
+  return EXIT_FAILURE;
 }
 

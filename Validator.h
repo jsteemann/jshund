@@ -2,6 +2,7 @@
 #ifndef JSHUND_VALIDATOR_H
 #define JSHUND_VALIDATOR_H 1
 
+#include <unistd.h>
 #include <string>
 #include <vector>
 #include <map>
@@ -9,11 +10,16 @@
 #include "Token.h"
 
 namespace jshund {
-  using namespace std;
-
   class Validator {
     public:
-      Validator () {
+      Validator (bool colors, bool globals) :
+        _globals(globals) {
+
+        if (colors && ::isatty(STDOUT_FILENO)) {
+          _colorGlobal   = "\x1b[0;33m";
+          _colorLocal    = "\x1b[0;31m";
+          _colorEnd      = "\x1b[0m";
+        }
       }
 
       ~Validator () {
@@ -43,21 +49,21 @@ namespace jshund {
           type(type), line(line), brackets(brackets), expectDeclaration(false) {
         };
 
-        StateEnum             type;
-        int                   line;
-        int                   brackets;
-        map<string, Variable> variables;
-        bool                  expectDeclaration;
+        StateEnum                       type;
+        int                             line;
+        int                             brackets;
+        std::map<std::string, Variable> variables;
+        bool                            expectDeclaration;
       };
 
     public:
-      bool validate (const string& filename, const vector<Token>& tokens) {
+      int validate (std::string const& filename, std::vector<Token> const& tokens) {
         int errors = 0;
         int brackets = 0;
 
         State startState(STATE_NOTHING, 1, brackets);
 
-        vector<State> states;
+        std::vector<State> states;
         states.push_back(startState);
 
         for (size_t i = 0, n = tokens.size(); i < n; ++i) {
@@ -70,10 +76,10 @@ namespace jshund {
               continue;
             }
 
-            const string name = currentToken.value;
+            const std::string name = currentToken.value;
 
             if (currentState.type == STATE_VARDECL && currentState.expectDeclaration) {
-              states[states.size() - 2].variables.insert(pair<string, Variable>(name, Variable(currentToken.line, false)));
+              states[states.size() - 2].variables.insert(std::pair<std::string, Variable>(name, Variable(currentToken.line, false)));
 
               Token next = tokens[i + 1];
               if (next.type == TOKEN_ASSIGN) {
@@ -92,7 +98,8 @@ namespace jshund {
               while (1) {
                 State& s = states[j];
 
-                map<string, Variable>::iterator it = s.variables.find(name);
+                std::map<std::string, Variable>::iterator it = s.variables.find(name);
+
                 if (it != s.variables.end()) {
                   (*it).second.used = true;
                   break;
@@ -148,11 +155,11 @@ namespace jshund {
             }
             else if (currentState.type == STATE_FUNCBODY && currentState.brackets == brackets) {
               // end of function body
-              map<string, Variable>::const_iterator it = currentState.variables.begin();
+              std::map<std::string, Variable>::const_iterator it = currentState.variables.begin();
 
               while (it != currentState.variables.end()) {
                 if (! (*it).second.used) {
-                  cerr << filename << ":" << (*it).second.line << ": unused local variable '" << (*it).first << "'" << endl;
+                  reportError(filename, (*it).second.line, (*it).first, false);
                   ++errors;
                 }
                 ++it;
@@ -161,13 +168,13 @@ namespace jshund {
             }
           }
 
-          else if (currentToken.type == TOKEN_EOF) {
+          else if (currentToken.type == TOKEN_EOF && _globals) {
             // end of file
-            map<string, Variable>::const_iterator it = currentState.variables.begin();
+            std::map<std::string, Variable>::const_iterator it = currentState.variables.begin();
 
             while (it != currentState.variables.end()) {
               if (! (*it).second.used) {
-                cerr << filename << ":" << (*it).second.line << ": unused global variable '" << (*it).first << "'" << endl;
+                reportError(filename, (*it).second.line, (*it).first, true);
                 ++errors;
               }
               ++it;
@@ -176,8 +183,25 @@ namespace jshund {
           }
         }
 
-        return (errors == 0);
+        return errors;
       }
+
+      void reportError (std::string const& filename, int line, std::string const& name, bool global) {
+        std::cout << filename << ':' << line 
+                  << (global ? _colorGlobal : _colorLocal) << ": unused " << (global ? "global" : "local") 
+                  << " variable '" << name << '\'' << _colorEnd  
+                  << std::endl;
+      }
+
+    private:
+
+      std::string _colorGlobal;
+      
+      std::string _colorLocal;
+      
+      std::string _colorEnd;
+
+      bool _globals;
 
   };
 }

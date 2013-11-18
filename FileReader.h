@@ -8,8 +8,6 @@
 #include <fstream>
 
 namespace jshund {
-  using namespace std;
-
   class FileReader {
     public:
       FileReader () {
@@ -18,27 +16,33 @@ namespace jshund {
       ~FileReader () {
       }
 
-      char* read (const string& fileName) {
-        int fileSize;
+    public:
 
-        ifstream f;
-        f.open(fileName.c_str(), ifstream::in | ifstream::binary);
+      char* read (const std::string& fileName) {
+        std::ifstream f;
+
+        f.open(fileName.c_str(), std::ifstream::in | std::ifstream::binary);
+
         if (! f.is_open()) {
           return 0;
         }
 
         // get filesize
-        f.seekg(0, ios::end);
-        fileSize = f.tellg();
-        f.seekg(0, ios::beg);
+        f.seekg(0, std::ios::end);
+        int fileSize = f.tellg();
+        f.seekg(0, std::ios::beg);
 
-        // init buffer
+        // allocate buffer plus some extra bytes
         char* buffer = new char[fileSize + 5];
-        memset(buffer + fileSize, 0, 5);
 
-        // read contents
-        f.read(buffer, fileSize);
-        f.close();
+        if (buffer != 0) {
+          // initialise buffer with 0s
+          memset(buffer + fileSize, 0, 5);
+
+          // read contents
+          f.read(buffer, fileSize);
+          f.close();
+        }
 
         return buffer;
       }

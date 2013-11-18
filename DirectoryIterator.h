@@ -10,8 +10,6 @@
 #include <dirent.h>
 
 namespace jshund {
-  using namespace std;
-
   class DirectoryIterator {
     public:
       DirectoryIterator () {
@@ -19,65 +17,76 @@ namespace jshund {
 
       ~DirectoryIterator () {
       }
+
+    public:
+      void addFiles (std::vector<std::string>& files, std::string const& argument) {
+        if (isFile(argument)) {
+          files.push_back(std::string(argument));
+        }
+        else if (isDir(argument)) {
+          addDir(files, argument);
+        }
+      }
+
+    private:
         
-      static bool isFile (const char* name) {
+      static bool isFile (std::string const& name) {
         struct stat filestatus;
   
-        if (stat(name, &filestatus) != 0 || (filestatus.st_mode & S_IFMT) != S_IFREG) {
+        if (::stat(name.c_str(), &filestatus) != 0 || (filestatus.st_mode & S_IFMT) != S_IFREG) {
           return false;
         }
 
         return true;
       }
       
-      static bool isDir (const char* name) {
+      static bool isDir (std::string const& name) {
         struct stat filestatus;
   
-        if (stat(name, &filestatus) != 0 || (filestatus.st_mode & S_IFMT) != S_IFDIR) {
+        if (::stat(name.c_str(), &filestatus) != 0 || (filestatus.st_mode & S_IFMT) != S_IFDIR) {
           return false;
         }
 
         return true;
       }
 
-      void addDir (vector<string>& files, const char* argv) {
-        struct dirent* d;
-        DIR* dh;
+      void addDir (std::vector<std::string>& files, std::string path) {
+        static const char separator = '/';
 
-        dh = opendir(argv); 
+        if (! path.empty() && path[path.size() - 1] == separator) {
+          // strip end separator
+          path = path.substr(0, path.size() - 1);
+        }
+
+        DIR* dh = ::opendir(path.c_str()); 
+
         if (dh == 0) {
           return;
         }
 
-        while ((d = readdir(dh))) {
+        struct dirent* d;
+        while ((d = ::readdir(dh))) {
           if (d->d_type == DT_REG) {
-            ostringstream filename;
-            filename << argv << '/' << d->d_name;
+            std::ostringstream filename;
+            filename << path << separator << d->d_name;
             files.push_back(filename.str());
           }
           else if (d->d_type == DT_DIR) {
-            ostringstream filename;
-            string name(d->d_name);
+            std::string name(d->d_name);
 
             if (name == ".." || name == ".") {
               continue;
             }
-            filename << argv << '/' << name; 
+
+            std::ostringstream filename;
+            filename << path << separator << name; 
             addDir(files, filename.str().c_str());
           } 
         }
 
-        closedir(dh);
+        ::closedir(dh);
       }
 
-      void addFiles (vector<string>& files, const char* argv) {
-        if (isFile(argv)) {
-          files.push_back(string(argv));
-        }
-        else if (isDir(argv)) {
-          addDir(files, argv);
-        }
-      }
   };
 }
 
