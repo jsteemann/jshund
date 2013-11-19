@@ -26,6 +26,9 @@ namespace jshund {
         else if (isDir(argument)) {
           addDir(files, argument);
         }
+        else {
+          std::cerr << "Ignoring invalid file/directory path '" << argument << "'" << std::endl;
+        }
       }
 
     private:

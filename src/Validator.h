@@ -52,7 +52,8 @@ namespace jshund {
         StateEnum                       type;
         int                             line;
         int                             brackets;
-        std::map<std::string, Variable> variables;
+        std::map<std::string, Variable> declaredVariables;
+        std::map<std::string, Variable> phantoms;
         bool                            expectDeclaration;
       };
 
@@ -60,6 +61,8 @@ namespace jshund {
       int validate (std::string const& filename, std::vector<Token> const& tokens) {
         int errors = 0;
         int brackets = 0;
+
+        _filename = filename;
 
         State startState(STATE_NOTHING, 1, brackets);
 
@@ -72,14 +75,31 @@ namespace jshund {
 
           if (currentToken.type == TOKEN_NAME) {
             if (i > 0 && tokens[i - 1].type == TOKEN_DOT) {
-              // compound name
+              // compound name, e.g. foo.bar
+              //                         ^^^
               continue;
             }
 
             const std::string name = currentToken.value;
 
-            if (currentState.type == STATE_VARDECL && currentState.expectDeclaration) {
-              states[states.size() - 2].variables.insert(std::pair<std::string, Variable>(name, Variable(currentToken.line, false)));
+            if (currentState.type == STATE_FUNCARG) {
+              // std::cout << "FOUND FUNCTION ARGUMENT '" << name << "'" << std::endl;
+
+              currentState.declaredVariables.insert(std::pair<std::string, Variable>(name, Variable(currentToken.line, true)));
+            }
+            else if (currentState.type == STATE_VARDECL && currentState.expectDeclaration) {
+              // std::cout << "FOUND DECLARATION OF VAR '" << name << "'" << std::endl;
+
+              if (states.size() <= 1) {
+                std::cerr << _filename << ':' << currentToken.line << ": encountered an invalid state during parsing" << std::endl;
+                return 1;
+              }
+
+              bool wasPhantom = states[states.size() - 2].phantoms.erase(name);
+              // if (wasPhantom) {
+              //   std::cout << "INGORING PHANTOM '" << name << "'\n";
+              // }
+              states[states.size() - 2].declaredVariables.insert(std::pair<std::string, Variable>(name, Variable(currentToken.line, wasPhantom)));
 
               Token next = tokens[i + 1];
               if (next.type == TOKEN_ASSIGN) {
@@ -94,18 +114,19 @@ namespace jshund {
             else {
               size_t j = states.size() - 1;
 
-              // cout << "FOUND USAGE OF VAR '" << name << "'" << endl;
+              // std::cout << "FOUND USAGE OF VAR '" << name << "'" << std::endl;
               while (1) {
                 State& s = states[j];
 
-                std::map<std::string, Variable>::iterator it = s.variables.find(name);
+                std::map<std::string, Variable>::iterator it = s.declaredVariables.find(name);
 
-                if (it != s.variables.end()) {
+                if (it != s.declaredVariables.end()) {
                   (*it).second.used = true;
                   break;
                 }
 
                 if (j-- == 0) {
+                  currentState.phantoms.insert(std::pair<std::string, Variable>(name, Variable(currentToken.line, false)));
                   break;
                 }
               }
@@ -148,21 +169,41 @@ namespace jshund {
             
             if (currentState.type == STATE_FUNCARG && currentState.brackets == brackets) {
               // end of function argument list
-              states.pop_back();
-              
               State funcState(STATE_FUNCBODY, currentToken.line, brackets);
+
+              std::map<std::string, Variable>::const_iterator it = currentState.declaredVariables.begin();
+              while (it != currentState.declaredVariables.end()) {
+                // std::cout << "PUSHING FUNCTION ARG '" << (*it).first << "'" << std::endl;
+                funcState.declaredVariables.insert(std::pair<std::string, Variable>((*it).first, (*it).second));
+                ++it;
+              }
+
+              states.pop_back();
               states.push_back(funcState);
             }
             else if (currentState.type == STATE_FUNCBODY && currentState.brackets == brackets) {
               // end of function body
-              std::map<std::string, Variable>::const_iterator it = currentState.variables.begin();
+              std::map<std::string, Variable>::const_iterator it = currentState.declaredVariables.begin();
 
-              while (it != currentState.variables.end()) {
+              while (it != currentState.declaredVariables.end()) {
                 if (! (*it).second.used) {
-                  reportError(filename, (*it).second.line, (*it).first, false);
+                  reportError((*it).second.line, (*it).first, false);
                   ++errors;
                 }
                 ++it;
+              }
+
+              // insert phantoms
+              if (states.size() > 1) {
+                State& prevState = states[states.size() - 2];
+
+                it = currentState.phantoms.begin();
+
+                while (it != currentState.phantoms.end()) {
+                  // std::cout << "PUSHING PHANTOM '" << (*it).first << "'" << std::endl;
+                  prevState.phantoms.insert(std::pair<std::string, Variable>((*it).first, (*it).second));
+                  ++it;
+                }
               }
               states.pop_back();
             }
@@ -170,11 +211,11 @@ namespace jshund {
 
           else if (currentToken.type == TOKEN_EOF && _globals) {
             // end of file
-            std::map<std::string, Variable>::const_iterator it = currentState.variables.begin();
+            std::map<std::string, Variable>::const_iterator it = currentState.declaredVariables.begin();
 
-            while (it != currentState.variables.end()) {
+            while (it != currentState.declaredVariables.end()) {
               if (! (*it).second.used) {
-                reportError(filename, (*it).second.line, (*it).first, true);
+                reportError((*it).second.line, (*it).first, true);
                 ++errors;
               }
               ++it;
@@ -186,9 +227,9 @@ namespace jshund {
         return errors;
       }
 
-      void reportError (std::string const& filename, int line, std::string const& name, bool global) {
-        std::cout << filename << ':' << line 
-                  << (global ? _colorGlobal : _colorLocal) << ": unused " << (global ? "global" : "local") 
+      void reportError (int line, std::string const& name, bool global) {
+        std::cout << _filename << ':' << line << ':'  
+                  << (global ? _colorGlobal : _colorLocal) << " unused " << (global ? "global" : "local") 
                   << " variable '" << name << '\'' << _colorEnd  
                   << std::endl;
       }
@@ -200,6 +241,8 @@ namespace jshund {
       std::string _colorLocal;
       
       std::string _colorEnd;
+
+      std::string _filename;
 
       bool _globals;
 
