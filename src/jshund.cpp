@@ -61,6 +61,16 @@ static bool ProcessFiles (std::vector<std::string>& files, bool colors, bool glo
   return hasError;
 }
 
+static void Bark () {
+  std::cout << "   _     _                     _  " << std::endl;
+  std::cout << "  (_)___| |__  _   _ _ __   __| | " << std::endl;
+  std::cout << "  | / __| '_ \\| | | | '_ \\ / _` | " << std::endl;
+  std::cout << "  | \\__ \\ | | | |_| | | | | (_| | " << std::endl;
+  std::cout << " _/ |___/_| |_|\\__,_|_| |_|\\__,_| " << std::endl;
+  std::cout << "|__/                              " << std::endl;
+  std::cout << std::endl;
+}
+
 int main (int argc, char* argv[]) {
   if (argc < 2) {
     // not enough arguments
@@ -87,6 +97,10 @@ int main (int argc, char* argv[]) {
       }
       else if (argument == "--no-globals") {
         globals = false;
+      }
+      else if (argument == "--help" || argument == "--version" || argument == "--bark") {
+        Bark();
+        return EXIT_SUCCESS;
       }
     }
   }
