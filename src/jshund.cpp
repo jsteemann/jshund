@@ -74,6 +74,7 @@ static void Bark () {
 int main (int argc, char* argv[]) {
   if (argc < 2) {
     // not enough arguments
+    Bark();
     std::cout << "usage: " << argv[0] << " <file>" << std::endl;
     return EXIT_FAILURE;
   }
