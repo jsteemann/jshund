@@ -59,7 +59,12 @@ Download the repo:
     git clone https://github.com/jsteemann/jshund
     cd jshund 
 
-Then compile it using a C++ compiler (e.g. g++):
+Then run
+
+    ./configure
+    make
+
+Or compile jshund manually using a C++ compiler (e.g. g++):
 
     g++ -Wall -Wextra src/jshund.cpp -o ./jshund
 
