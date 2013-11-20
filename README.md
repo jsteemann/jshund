@@ -61,18 +61,19 @@ Download the repo:
 
 Then run
 
-    ./configure
     make
 
 Or compile jshund manually using a C++ compiler (e.g. g++):
 
-    g++ -Wall -Wextra src/jshund.cpp -o ./jshund
+    mkdir -p bin
+    g++ -Wall -Wextra src/jshund.cpp -o bin/jshund
 
 or, when using clang++:
 
-    clang++ -Wall -Wextra src/jshund.cpp -o ./jshund
+    mkdir -p bin
+    clang++ -Wall -Wextra src/jshund.cpp -o bin/jshund
 
-You will then have a binary `jshund` available in the local directory.
+You will then have a binary `jshund` available in the `bin` directory.
 
 Usage
 -----
