@@ -4,7 +4,14 @@
 AC_PREREQ([2.68])
 AC_INIT([jshund], [0.0.2], [fuxx@triagens.de])
 
-AM_INIT_AUTOMAKE
+AC_CANONICAL_BUILD
+AC_CANONICAL_HOST
+AC_CANONICAL_TARGET
+
+AC_LANG([C++])
+
+AM_INIT_AUTOMAKE([foreign])
+
 AC_CONFIG_SRCDIR([src/jshund.cpp])
 AC_CONFIG_FILES([Makefile])
 
