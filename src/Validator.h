@@ -72,8 +72,16 @@ namespace jshund {
         for (size_t i = 0, n = tokens.size(); i < n; ++i) {
           State& currentState = states[states.size() - 1];
           Token const& currentToken = tokens[i];
+            
+          if (currentState.type == STATE_VARDECL && 
+              ! currentState.expectDeclaration && 
+              currentToken.type == TOKEN_COMMA &&
+              currentState.brackets == brackets) {
+            // std::cout << "FOUND COMMA\n";
+            currentState.expectDeclaration = true;
+          }
 
-          if (currentToken.type == TOKEN_NAME) {
+          else if (currentToken.type == TOKEN_NAME) {
             if (i > 0 && tokens[i - 1].type == TOKEN_DOT) {
               // compound name, e.g. foo.bar
               //                         ^^^
@@ -97,7 +105,7 @@ namespace jshund {
 
               bool wasPhantom = states[states.size() - 2].phantoms.erase(name);
               // if (wasPhantom) {
-              //   std::cout << "INGORING PHANTOM '" << name << "'\n";
+              //   std::cout << "IGNORING PHANTOM '" << name << "'\n";
               // }
               states[states.size() - 2].declaredVariables.insert(std::pair<std::string, Variable>(name, Variable(currentToken.line, wasPhantom)));
 
