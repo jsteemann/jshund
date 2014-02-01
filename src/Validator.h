@@ -110,7 +110,7 @@ namespace jshund {
               states[states.size() - 2].declaredVariables.insert(std::pair<std::string, Variable>(name, Variable(currentToken.line, wasPhantom)));
 
               Token next = tokens[i + 1];
-              if (next.type == TOKEN_ASSIGN) {
+              if (next.type == TOKEN_ASSIGN || next.type == TOKEN_IN) {
                 currentState.expectDeclaration = false;
               }
               else if (next.type == TOKEN_COMMA) {
