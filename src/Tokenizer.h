@@ -13,8 +13,8 @@ namespace jshund {
 
   class Tokenizer {
     public:
-      Tokenizer () : 
-        _tokenMap(), _keywordMap(), _tokens() {
+      Tokenizer (bool debug) :
+        _tokenMap(), _keywordMap(), _tokens(), _debug(debug) {
 
         _tokenMap["."]   = TOKEN_DOT;
         _tokenMap[","]   = TOKEN_COMMA;
@@ -104,6 +104,12 @@ namespace jshund {
 
         doTokenize();
 
+        if (_debug) {
+          for (size_t i = 0; i < _tokens.size(); ++i) {
+            _tokens[i].dump();
+          }
+        }
+
         return _tokens;
       }
 
@@ -182,7 +188,13 @@ namespace jshund {
 
       Token handleRegex () {
         size_t now = _position + 1;
-        
+       /* 
+    if (!/^[\\\/]{2}[^\\\/]/.test(paths[0])) {
+328         joined = joined.replace(/^[\\\/]{2,}/, '\\');
+329       }
+330 
+*/
+
         while (true) {
           char n = _input[now];
           if (n == '\\') {
@@ -326,7 +338,11 @@ namespace jshund {
           else if (c2 == '/') {
             return handleCommentSingle();
           }
-          if (_last == TOKEN_PARENS_OPEN || _last == TOKEN_ASSIGN || _last == TOKEN_COLON || _last == TOKEN_COMMA) {
+          if (_last == TOKEN_PARENS_OPEN || 
+              _last == TOKEN_ASSIGN || 
+              _last == TOKEN_COLON || 
+              _last == TOKEN_COMMA ||
+              _last == TOKEN_NOT) {
             return handleRegex();
           }
         }
@@ -406,6 +422,8 @@ namespace jshund {
       size_t _position;
 
       size_t _line;
+
+      bool _debug;
 
   };
 }

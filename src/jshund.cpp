@@ -34,7 +34,7 @@ static std::vector<std::string> AddFiles (int argc, char* argv[]) {
   return files;
 }
 
-static bool ProcessFiles (std::vector<std::string>& files, bool colors, bool globals) {
+static bool ProcessFiles (std::vector<std::string>& files, bool colors, bool globals, bool debug) {
   bool hasError = false;
 
   FileReader f;
@@ -48,7 +48,11 @@ static bool ProcessFiles (std::vector<std::string>& files, bool colors, bool glo
       hasError = true;
     }
     else {
-      Tokenizer t;
+      if (debug) {
+        std::cout << "parsing input file '" << filename << "'" << std::endl;
+        std::cout << "----------------------------------------------------------" << std::endl << std::endl;
+      }
+      Tokenizer t(debug);
       Validator v(colors, globals);
       if (! v.validate(filename, t.tokenize(fileContent))) {
         hasError = true;
@@ -82,6 +86,7 @@ int main (int argc, char* argv[]) {
   // parse options
   bool colors  = true;
   bool globals = true; 
+  bool debug   = false; 
 
   for (int i = 1; i < argc; ++i) {
     const std::string argument(argv[i]);
@@ -99,6 +104,9 @@ int main (int argc, char* argv[]) {
       else if (argument == "--no-globals") {
         globals = false;
       }
+      else if (argument == "--debug") {
+        debug = true;
+      }
       else if (argument == "--help" || argument == "--version" || argument == "--bark") {
         Bark();
         return EXIT_SUCCESS;
@@ -109,7 +117,7 @@ int main (int argc, char* argv[]) {
   // add files
   std::vector<std::string> files = AddFiles(argc, argv);
 
-  int errors = ProcessFiles(files, colors, globals);
+  int errors = ProcessFiles(files, colors, globals, debug);
 
   // return status code based on whether there were any errors
   if (errors == 0) {

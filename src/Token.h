@@ -96,6 +96,10 @@ namespace jshund {
     TokenType    type;
     std::string  value;
     size_t       line;
+
+    void dump () {
+      std::cout << "LINE " << line << ", TOKEN(" << type << "): " << value << "\n";
+    }
   };
 }
 
